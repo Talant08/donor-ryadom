@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Донор рядом — Платформа проверенных акций сдачи крови</title>
+    <!-- Подключение Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Подключение шрифта Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        coral: {
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            200: '#fecdd3',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                            700: '#be123c',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        /* Плавные переходы и скролл */
+        html {
+            scroll-behavior: smooth;
+        }
+        .card-hover {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px -8px rgba(225, 29, 72, 0.12);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-coral-100 selection:text-coral-700">
+
+    <!-- Уведомление (Toast) вместо alert() -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Шапка сайта -->
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200/80">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+            <!-- Логотип -->
+            <a href="#" class="flex items-center gap-2.5 group">
+                <div class="w-9 h-9 rounded-xl bg-coral-600 flex items-center justify-center text-white shadow-sm shadow-coral-600/30 group-hover:bg-coral-700 transition">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <span class="font-bold text-lg tracking-tight text-slate-900">Донор<span class="text-coral-600">рядом</span></span>
+                </div>
+            </a>
+
+            <!-- Навигация (Десктоп) -->
+            <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
+                <a href="#urgency-section" class="hover:text-coral-600 transition">Светофор крови</a>
+                <a href="#events-section" class="hover:text-coral-600 transition">Акции и выезды</a>
+                <a href="#prep-section" class="hover:text-coral-600 transition">Чек-лист донора</a>
+            </nav>
+
+            <!-- Кнопки действий в шапке -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <button onclick="openAddDriveModal()" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200/80 transition">
+                    <svg class="w-4 h-4 text-coral-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    <span>Для центров крови</span>
+                </button>
+
+                <button onclick="openBookingsDrawer()" class="relative inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-coral-600 hover:bg-coral-700 shadow-sm shadow-coral-600/20 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span>Мои записи</span>
+                    <span id="bookings-badge" class="hidden ml-0.5 px-1.5 py-0.2 text-xs font-bold bg-white text-coral-600 rounded-full">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Главный экран (Hero) -->
+    <section class="bg-white border-b border-slate-200/70">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+            <div class="grid lg:grid-cols-12 gap-8 items-center">
+                <div class="lg:col-span-7 space-y-5">
+                    <!-- Бейдж демо-прототипа -->
+                    <div class="inline-flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200/80 text-amber-800 text-xs font-medium">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        <span>Демо-прототип: используются тестовые данные</span>
+                    </div>
+
+                    <h1 class="text-3xl sm:text-4xl lg:text-[42px] font-extrabold tracking-tight text-slate-900 leading-[1.15]">
+                        Платформа проверенных акций сдачи крови и <span class="text-coral-600">умных напоминаний</span>
+                    </h1>
+
+                    <p class="text-base sm:text-lg text-slate-600 max-w-2xl leading-relaxed">
+                        Узнавайте о выездных днях донора в Конаеве, Алматы и других городах, записывайтесь за 30 секунд и получайте памятку подготовки перед процедурой.
+                    </p>
+
+                    <div class="flex flex-wrap items-center gap-3 pt-1">
+                        <a href="#events-section" class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm text-white bg-coral-600 hover:bg-coral-700 shadow-md shadow-coral-600/20 transition">
+                            <span>Найти акцию рядом</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </a>
+                        <a href="#prep-section" class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm text-slate-700 bg-slate-100 hover:bg-slate-200/80 transition">
+                            <span>Могу ли я стать донором?</span>
+                        </a>
+                        <button onclick="openAddDriveModal()" class="sm:hidden inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl font-medium text-sm text-coral-700 bg-coral-50 border border-coral-200">
+                            <span>+ Добавить акцию (Демо)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Правая карточка с ключевыми преимуществами -->
+                <div class="lg:col-span-5">
+                    <div class="bg-slate-50 rounded-2xl p-6 border border-slate-200/80 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Как это работает</span>
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">100% проверено</span>
+                        </div>
+                        <div class="space-y-3.5">
+                            <div class="flex items-start gap-3 bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm">
+                                <div class="w-8 h-8 rounded-lg bg-coral-50 text-coral-600 font-bold text-sm flex items-center justify-center shrink-0">1</div>
+                                <div>
+                                    <h3 class="font-semibold text-sm text-slate-900">Только официальные центры</h3>
+                                    <p class="text-xs text-slate-500 mt-0.5">Объявления публикуются и подтверждаются медицинскими организациями.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm">
+                                <div class="w-8 h-8 rounded-lg bg-coral-50 text-coral-600 font-bold text-sm flex items-center justify-center shrink-0">2</div>
+                                <div>
+                                    <h3 class="font-semibold text-sm text-slate-900">Запись без очередей</h3>
+                                    <p class="text-xs text-slate-500 mt-0.5">Выбор удобного временного слота на выездной акции или в центре крови.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm">
+                                <div class="w-8 h-8 rounded-lg bg-coral-50 text-coral-600 font-bold text-sm flex items-center justify-center shrink-0">3</div>
+                                <div>
+                                    <h3 class="font-semibold text-sm text-slate-900">Напоминание и диета</h3>
+                                    <p class="text-xs text-slate-500 mt-0.5">Персональный талон-памятка, чтобы не забыть дату и правильно подготовиться.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-12">
+
+        <!-- Секция 2: Донорский светофор (Потребность в группах крови) -->
+        <section id="urgency-section" class="space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+                <div>
+                    <h2 class="text-xl sm:text-2xl font-bold text-slate-900">Донорский светофор (демо-сводка)</h2>
+                    <p class="text-sm text-slate-500">Ориентировочная потребность в группах крови на текущую неделю</p>
+                </div>
+                <div class="flex items-center gap-4 text-xs font-medium">
+                    <span class="flex items-center gap-1.5 text-coral-700"><span class="w-2.5 h-2.5 rounded-full bg-coral-600"></span>Повышенный спрос</span>
+                    <span class="flex items-center gap-1.5 text-amber-700"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>Средний</span>
+                    <span class="flex items-center gap-1.5 text-emerald-700"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Норма</span>
+                </div>
+            </div>
+
+            <div id="blood-needs-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+                <!-- Генерируется через JS -->
+            </div>
+        </section>
+
+        <!-- Секция 3: Лента акций с фильтрами -->
+        <section id="events-section" class="space-y-5">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl sm:text-2xl font-bold text-slate-900">Ближайшие акции и пункты сдачи</h2>
+                    <p class="text-sm text-slate-500">Выберите удобную локацию и забронируйте время</p>
+                </div>
+                <button onclick="openAddDriveModal()" class="self-start md:self-auto inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-coral-700 bg-coral-50 hover:bg-coral-100 border border-coral-200 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    <span>Опубликовать акцию (Демо-режим)</span>
+                </button>
+            </div>
+
+            <!-- Панель фильтров -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <!-- Фильтр по городу -->
+                <div>
+                    <label for="filter-city" class="block text-xs font-medium text-slate-500 mb-1">Город</label>
+                    <select id="filter-city" onchange="renderEvents()" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-coral-500 focus:bg-white">
+                        <option value="all">Все города</option>
+                        <option value="Конаев">Конаев</option>
+                        <option value="Алматы">Алматы</option>
+                        <option value="Астана">Астана</option>
+                    </select>
+                </div>
+
+                <!-- Фильтр по типу донации -->
+                <div>
+                    <label for="filter-type" class="block text-xs font-medium text-slate-500 mb-1">Тип донации</label>
+                    <select id="filter-type" onchange="renderEvents()" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-coral-500 focus:bg-white">
+                        <option value="all">Все типы</option>
+                        <option value="Цельная кровь">Цельная кровь</option>
+                        <option value="Плазма">Плазма</option>
+                        <option value="Тромбоциты">Тромбоциты</option>
+                    </select>
+                </div>
+
+                <!-- Поиск -->
+                <div class="sm:col-span-2">
+                    <label for="filter-search" class="block text-xs font-medium text-slate-500 mb-1">Поиск по названию, адресу или центру крови</label>
+                    <div class="relative">
+                        <input type="text" id="filter-search" oninput="renderEvents()" placeholder="Например: Конаев, колледж, центр крови..." class="w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-coral-500 focus:bg-white">
+                        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Сетка карточек акций -->
+            <div id="events-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Карточки рендерятся через JS -->
+            </div>
+        </section>
+
+        <!-- Секция 5: Интерактивный чек-лист готовности и памятка -->
+        <section id="prep-section" class="grid lg:grid-cols-12 gap-6">
+            <!-- Быстрая самопроверка -->
+            <div class="lg:col-span-6 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm flex flex-col justify-between space-y-5">
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-coral-50 text-coral-600 flex items-center justify-center">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Можно ли мне сдавать кровь сегодня?</h2>
+                            <p class="text-xs text-slate-500">Отметьте пункты, которые соответствуют вашему состоянию</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2.5 pt-1" id="eligibility-checks">
+                        <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200/80 hover:bg-slate-50 cursor-pointer transition">
+                            <input type="checkbox" onchange="evaluateEligibility()" class="elig-box mt-0.5 w-4 h-4 rounded text-coral-600 focus:ring-coral-500">
+                            <span class="text-sm text-slate-700">Мне исполнилось <strong>18 лет</strong>, и при себе есть удостоверение личности</span>
+                        </label>
+                        <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200/80 hover:bg-slate-50 cursor-pointer transition">
+                            <input type="checkbox" onchange="evaluateEligibility()" class="elig-box mt-0.5 w-4 h-4 rounded text-coral-600 focus:ring-coral-500">
+                            <span class="text-sm text-slate-700">Мой вес составляет <strong>50 кг и более</strong></span>
+                        </label>
+                        <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200/80 hover:bg-slate-50 cursor-pointer transition">
+                            <input type="checkbox" onchange="evaluateEligibility()" class="elig-box mt-0.5 w-4 h-4 rounded text-coral-600 focus:ring-coral-500">
+                            <span class="text-sm text-slate-700">Нет симптомов простуды, температуры и приёма антибиотиков за последние 14 дней</span>
+                        </label>
+                        <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200/80 hover:bg-slate-50 cursor-pointer transition">
+                            <input type="checkbox" onchange="evaluateEligibility()" class="elig-box mt-0.5 w-4 h-4 rounded text-coral-600 focus:ring-coral-500">
+                            <span class="text-sm text-slate-700">Прошло более 60 дней с прошлой сдачи цельной крови (или я сдаю впервые)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="eligibility-result" class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-600">
+                    Отметьте все 4 пункта выше, чтобы увидеть предварительную подсказку.
+                </div>
+            </div>
+
+            <!-- Памятка подготовки -->
+            <div class="lg:col-span-6 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm flex flex-col justify-between space-y-5">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-bold text-slate-900">Памятка подготовки к донации</h2>
+                                <p class="text-xs text-slate-500">Что важно соблюсти за 24–48 часов до визита</p>
+                            </div>
+                        </div>
+                        <button onclick="togglePrepDetails()" id="toggle-prep-btn" class="text-xs font-semibold text-coral-600 hover:text-coral-700 px-3 py-1.5 rounded-lg bg-coral-50">
+                            Свернуть
+                        </button>
+                    </div>
+
+                    <div id="prep-details" class="grid sm:grid-cols-2 gap-3 pt-1">
+                        <div class="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 space-y-2">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-800">Рекомендуется</h3>
+                            <ul class="text-xs text-emerald-950 space-y-1.5 leading-relaxed">
+                                <li>• Пить больше чистой воды или сладкого чая</li>
+                                <li>• Лёгкий завтрак утром (каша на воде, сушки, фрукты)</li>
+                                <li>• Хорошо выспаться перед процедурой</li>
+                                <li>• Взять оригинал удостоверения личности</li>
+                            </ul>
+                        </div>
+                        <div class="p-3.5 rounded-xl bg-rose-50/70 border border-rose-200/80 space-y-2">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-rose-800">Исключить заранее</h3>
+                            <ul class="text-xs text-rose-950 space-y-1.5 leading-relaxed">
+                                <li>• Алкоголь — минимум за 48 часов</li>
+                                <li>• Жирную, жареную, острую пищу и молочное за 24 часа</li>
+                                <li>• Аспирин и анальгетики — за 72 часа</li>
+                                <li>• Курение — минимум за 1–2 часа до сдачи</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="text-xs text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-200/70">
+                    <strong>Важно:</strong> памятка носит ознакомительный характер. Окончательный допуск к донации определяет врач-трансфузиолог после осмотра и экспресс-анализа крови на месте.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Подвал -->
+    <footer class="bg-white border-t border-slate-200/80 mt-12">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+            <div class="flex items-center gap-2">
+                <span class="font-semibold text-slate-700">Донор рядом</span>
+                <span>•</span>
+                <span>Социальный проект в сфере здравоохранения (Демо-прототип)</span>
+            </div>
+            <div class="font-medium text-slate-600">
+                Разработчик: Сүйіндік Талант
+            </div>
+        </div>
+    </footer>
+
+    <!-- МОДАЛЬНОЕ ОКНО 1: Запись и напоминание -->
+    <div id="booking-modal" class="fixed inset-0 z-40 hidden items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 relative animate-fade-in">
+            <button onclick="closeBookingModal()" class="absolute top-4 right-4 w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+
+            <div>
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 mb-2">
+                    ✓ Проверено центром крови
+                </span>
+                <h3 id="modal-drive-title" class="text-lg font-bold text-slate-900">Запись на акцию</h3>
+                <p id="modal-drive-meta" class="text-xs text-slate-500 mt-1"></p>
+            </div>
+
+            <form id="booking-form" onsubmit="submitBooking(event)" class="space-y-3.5">
+                <input type="hidden" id="modal-drive-id">
+                
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Ваше имя и фамилия *</label>
+                    <input type="text" id="donor-name" required placeholder="Например: Айдос Сериков" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-coral-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Телефон или @Telegram для напоминания *</label>
+                    <input type="text" id="donor-contact" required placeholder="+7 (700) 000-00-00 или @username" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-coral-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Удобное время визита *</label>
+                    <select id="donor-slot" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-coral-500">
+                        <option value="09:00 – 10:00">09:00 – 10:00</option>
+                        <option value="10:00 – 11:00">10:00 – 11:00</option>
+                        <option value="11:00 – 12:00">11:00 – 12:00</option>
+                        <option value="12:00 – 13:00">12:00 – 13:00</option>
+                    </select>
+                </div>
+
+                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 space-y-2">
+                    <span class="block text-xs font-semibold text-slate-700">Настроить напоминания:</span>
+                    <label class="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                        <input type="checkbox" id="rem-24h" checked class="rounded text-coral-600 focus:ring-coral-500">
+                        <span>Напомнить за 24 часа (диета и режим дня)</span>
+                    </label>
+                    <label class="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                        <input type="checkbox" id="rem-2h" checked class="rounded text-coral-600 focus:ring-coral-500">
+                        <span>Напомнить за 2 часа (завтрак и документы)</span>
+                    </label>
+                </div>
+
+                <div class="pt-2 flex items-center gap-2.5">
+                    <button type="button" onclick="closeBookingModal()" class="flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition">
+                        Отмена
+                    </button>
+                    <button type="submit" class="flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold text-white bg-coral-600 hover:bg-coral-700 shadow-sm transition">
+                        Подтвердить запись
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО 2: Добавить акцию (Демо-режим центра крови) -->
+    <div id="add-drive-modal" class="fixed inset-0 z-40 hidden items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 relative">
+            <button onclick="closeAddDriveModal()" class="absolute top-4 right-4 w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+
+            <div>
+                <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-coral-50 text-coral-700 mb-1.5">Кабинет центра крови (Демо)</span>
+                <h3 class="text-lg font-bold text-slate-900">Опубликовать новую акцию</h3>
+                <p class="text-xs text-slate-500">Объявление сразу появится в общей ленте со статусом проверки</p>
+            </div>
+
+            <form onsubmit="submitNewDrive(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Название акции *</label>
+                    <input type="text" id="new-title" required placeholder="Например: День донора в колледже г. Конаев" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-coral-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Город *</label>
+                        <select id="new-city" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-coral-500">
+                            <option value="Конаев">Конаев</option>
+                            <option value="Алматы">Алматы</option>
+                            <option value="Астана">Астана</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Тип донации *</label>
+                        <select id="new-type" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-coral-500">
+                            <option value="Цельная кровь">Цельная кровь</option>
+                            <option value="Плазма">Плазма</option>
+                            <option value="Тромбоциты">Тромбоциты</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Организатор (Центр крови) *</label>
+                    <input type="text" id="new-center" required value="Областной центр крови (Демо)" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-coral-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Адрес проведения *</label>
+                    <input type="text" id="new-address" required placeholder="ул. Индустриальная, 14 (актовый зал)" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-coral-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Дата и время *</label>
+                        <input type="text" id="new-date" required value="28 ноября, 09:00–13:00" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-coral-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Свободных мест *</label>
+                        <input type="number" id="new-slots" required min="1" max="200" value="25" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-coral-500">
+                    </div>
+                </div>
+
+                <div class="pt-2 flex items-center gap-2">
+                    <button type="button" onclick="closeAddDriveModal()" class="flex-1 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition">Отмена</button>
+                    <button type="submit" class="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-coral-600 hover:bg-coral-700 transition">Опубликовать</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- БОКОВАЯ ПАНЕЛЬ (Drawer): Мои записи и талоны-напоминания -->
+    <div id="bookings-drawer" class="fixed inset-0 z-50 hidden justify-end bg-slate-900/50 backdrop-blur-xs">
+        <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col justify-between">
+            <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900">Мои записи и напоминания</h3>
+                    <p class="text-xs text-slate-500">Сохранено в памяти браузера (демо)</p>
+                </div>
+                <button onclick="closeBookingsDrawer()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div id="bookings-list" class="flex-1 overflow-y-auto p-5 space-y-4">
+                <!-- Список записей рендерится через JS -->
+            </div>
+
+            <div class="p-4 border-t border-slate-200 bg-slate-50 text-xs text-slate-500">
+                Вы можете скопировать текст талона-напоминания или скачать памятку перед сдачей крови.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. ТЕСТОВЫЕ ДАННЫЕ (Светофор крови и Акции) ---
+        const bloodNeedsData = [
+            { group: 'I (0) Rh−', level: 'high', label: 'Повышенный' },
+            { group: 'I (0) Rh+', level: 'medium', label: 'Средний' },
+            { group: 'II (A) Rh−', level: 'high', label: 'Повышенный' },
+            { group: 'II (A) Rh+', level: 'normal', label: 'Норма' },
+            { group: 'III (B) Rh−', level: 'medium', label: 'Средний' },
+            { group: 'III (B) Rh+', level: 'normal', label: 'Норма' },
+            { group: 'IV (AB) Rh−', level: 'high', label: 'Повышенный' },
+            { group: 'IV (AB) Rh+', level: 'normal', label: 'Норма' },
+        ];
+
+        const initialDrives = [
+            {
+                id: 'drv-1',
+                title: 'Выездной День донора в г. Конаев',
+                city: 'Конаев',
+                type: 'Цельная кровь',
+                center: 'Алматинский областной центр крови (Демо)',
+                address: 'г. Конаев, 1-й мкр., медпункт учебного корпуса',
+                date: '26 ноября, 09:00 – 13:00',
+                slots: 18,
+                urgentGroups: ['I (0) Rh−', 'II (A) Rh−']
+            },
+            {
+                id: 'drv-2',
+                title: 'Акция «Подари жизнь» — Центр крови',
+                city: 'Алматы',
+                type: 'Цельная кровь',
+                center: 'Республиканский центр крови (Демо)',
+                address: 'г. Алматы, ул. Утепова, 1',
+                date: '27 ноября, 08:30 – 14:00',
+                slots: 32,
+                urgentGroups: ['I (0) Rh−', 'IV (AB) Rh−']
+            },
+            {
+                id: 'drv-3',
+                title: 'Донорство плазмы для стационаров',
+                city: 'Алматы',
+                type: 'Плазма',
+                center: 'Городской центр крови (Демо)',
+                address: 'г. Алматы, ул. Бухар Жырау, 47',
+                date: '29 ноября, 09:00 – 13:30',
+                slots: 14,
+                urgentGroups: ['II (A) Rh+', 'III (B) Rh+']
+            },
+            {
+                id: 'drv-4',
+                title: 'Субботний день донора в Астане',
+                city: 'Астана',
+                type: 'Тромбоциты',
+                center: 'Научно-производственный центр трансфузиологии (Демо)',
+                address: 'г. Астана, ул. Керей, Жанибек хандар, 10',
+                date: '30 ноября, 09:00 – 13:00',
+                slots: 11,
+                urgentGroups: ['I (0) Rh−', 'III (B) Rh−']
+            },
+            {
+                id: 'drv-5',
+                title: 'Молодёжная донорская акция «Жүректен жүрекке»',
+                city: 'Конаев',
+                type: 'Цельная кровь',
+                center: 'Выездная бригада центра крови (Демо)',
+                address: 'г. Конаев, ул. Алматинская, 22 (Дом культуры)',
+                date: '2 декабря, 09:30 – 13:00',
+                slots: 24,
+                urgentGroups: ['Все группы']
+            }
+        ];
+
+        // Загрузка состояния из localStorage или инициализация
+        let drives = JSON.parse(localStorage.getItem('donor_drives_v1')) || initialDrives;
+        let bookings = JSON.parse(localStorage.getItem('donor_bookings_v1')) || [];
+
+        function saveState() {
+            localStorage.setItem('donor_drives_v1', JSON.stringify(drives));
+            localStorage.setItem('donor_bookings_v1', JSON.stringify(bookings));
+        }
+
+        // --- 2. РЕНДЕР СВЕТОФОРА КРОВИ ---
+        function renderBloodNeeds() {
+            const container = document.getElementById('blood-needs-grid');
+            container.innerHTML = bloodNeedsData.map(item => {
+                let badgeStyle = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                let dotColor = 'bg-emerald-500';
+                if (item.level === 'high') {
+                    badgeStyle = 'bg-coral-50 text-coral-700 border-coral-200';
+                    dotColor = 'bg-coral-600 animate-pulse';
+                } else if (item.level === 'medium') {
+                    badgeStyle = 'bg-amber-50 text-amber-700 border-amber-200';
+                    dotColor = 'bg-amber-500';
+                }
+
+                return `
+                    <div class="bg-white rounded-xl p-3 border border-slate-200/80 flex flex-col justify-between gap-2 shadow-2xs">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-sm text-slate-900">${item.group}</span>
+                            <span class="w-2.5 h-2.5 rounded-full ${dotColor}"></span>
+                        </div>
+                        <span class="inline-block text-[11px] font-semibold px-2 py-0.5 rounded-md border ${badgeStyle} w-fit">
+                            ${item.label}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- 3. РЕНДЕР ЛЕНТЫ АКЦИЙ ---
+        function renderEvents() {
+            const cityFilter = document.getElementById('filter-city').value;
+            const typeFilter = document.getElementById('filter-type').value;
+            const searchQuery = document.getElementById('filter-search').value.trim().toLowerCase();
+
+            const filtered = drives.filter(drive => {
+                const matchCity = cityFilter === 'all' || drive.city === cityFilter;
+                const matchType = typeFilter === 'all' || drive.type === typeFilter;
+                const matchSearch = !searchQuery || 
+                    drive.title.toLowerCase().includes(searchQuery) ||
+                    drive.address.toLowerCase().includes(searchQuery) ||
+                    drive.center.toLowerCase().includes(searchQuery) ||
+                    drive.city.toLowerCase().includes(searchQuery);
+                return matchCity && matchType && matchSearch;
+            });
+
+            const grid = document.getElementById('events-grid');
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full bg-white rounded-2xl border border-slate-200 p-10 text-center space-y-2">
+                        <p class="text-base font-semibold text-slate-800">По выбранным фильтрам акций не найдено</p>
+                        <p class="text-sm text-slate-500">Попробуйте сбросить фильтры или выбрать «Все города».</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(drive => {
+                const isBooked = bookings.some(b => b.driveId === drive.id);
+                const urgentTags = (drive.urgentGroups || []).map(g => 
+                    `<span class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-coral-50 text-coral-700">${g}</span>`
+                ).join('');
+
+                return `
+                    <article class="bg-white rounded-2xl border border-slate-200/90 p-5 flex flex-col justify-between gap-4 card-hover">
+                        <div class="space-y-3">
+                            <!-- Верхняя строка: статус проверки и город -->
+                            <div class="flex items-center justify-between gap-2 flex-wrap">
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Проверено центром крови
+                                </span>
+                                <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">${drive.city}</span>
+                            </div>
+
+                            <!-- Заголовок и тип -->
+                            <div>
+                                <div class="text-xs font-semibold text-coral-600 mb-1">${drive.type}</div>
+                                <h3 class="font-bold text-base text-slate-900 leading-snug">${drive.title}</h3>
+                            </div>
+
+                            <!-- Детали -->
+                            <div class="space-y-1.5 text-xs text-slate-600 pt-1">
+                                <div class="flex items-start gap-2">
+                                    <svg class="w-4 h-4 text-slate-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                    <span class="font-medium text-slate-800">${drive.date}</span>
+                                </div>
+                                <div class="flex items-start gap-2">
+                                    <svg class="w-4 h-4 text-slate-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                    <span>${drive.address}</span>
+                                </div>
+                                <div class="flex items-start gap-2">
+                                    <svg class="w-4 h-4 text-slate-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/>
+                                    </svg>
+                                    <span class="text-slate-500">${drive.center}</span>
+                                </div>
+                            </div>
+
+                            <!-- Особо нужные группы -->
+                            <div class="pt-1 flex items-center flex-wrap gap-1.5">
+                                <span class="text-[11px] text-slate-400">Особо нужны:</span>
+                                ${urgentTags}
+                            </div>
+                        </div>
+
+                        <!-- Подвал карточки -->
+                        <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+                            <div class="text-xs">
+                                <span class="text-slate-400 block">Свободно мест</span>
+                                <span class="font-bold text-slate-800">${drive.slots}</span>
+                            </div>
+
+                            ${isBooked 
+                                ? `<button onclick="openBookingsDrawer()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition">
+                                     ✓ Вы записаны (Талон)
+                                   </button>`
+                                : `<button onclick="openBookingModal('${drive.id}')" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-coral-600 hover:bg-coral-700 shadow-xs transition">
+                                     Записаться и напомнить
+                                   </button>`
+                            }
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        // --- 4. МОДАЛЬНОЕ ОКНО ЗАПИСИ И НАПОМИНАНИЙ ---
+        function openBookingModal(driveId) {
+            const drive = drives.find(d => d.id === driveId);
+            if (!drive) return;
+
+            document.getElementById('modal-drive-id').value = drive.id;
+            document.getElementById('modal-drive-title').textContent = drive.title;
+            document.getElementById('modal-drive-meta').textContent = `${drive.date} • ${drive.address}`;
+
+            const modal = document.getElementById('booking-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeBookingModal() {
+            const modal = document.getElementById('booking-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function submitBooking(e) {
+            e.preventDefault();
+            const driveId = document.getElementById('modal-drive-id').value;
+            const drive = drives.find(d => d.id === driveId);
+            if (!drive) return;
+
+            const name = document.getElementById('donor-name').value.trim();
+            const contact = document.getElementById('donor-contact').value.trim();
+            const slot = document.getElementById('donor-slot').value;
+            const rem24h = document.getElementById('rem-24h').checked;
+            const rem2h = document.getElementById('rem-2h').checked;
+
+            const reminders = [];
+            if (rem24h) reminders.push('за 24 часа');
+            if (rem2h) reminders.push('за 2 часа');
+
+            const newBooking = {
+                bookingId: 'BK-' + Math.floor(1000 + Math.random() * 9000),
+                driveId: drive.id,
+                driveTitle: drive.title,
+                city: drive.city,
+                date: drive.date,
+                address: drive.address,
+                center: drive.center,
+                donorName: name,
+                contact: contact,
+                slot: slot,
+                reminders: reminders.length ? reminders.join(' и ') : 'без авто-напоминаний'
+            };
+
+            // Уменьшаем счётчик свободных мест
+            if (drive.slots > 0) drive.slots -= 1;
+
+            bookings.unshift(newBooking);
+            saveState();
+            updateBookingsBadge();
+            renderEvents();
+            closeBookingModal();
+            document.getElementById('booking-form').reset();
+
+            showToast('Запись подтверждена! Напоминание добавлено в «Мои записи».');
+            openBookingsDrawer();
+        }
+
+        // --- 5. ПАНЕЛЬ «МОИ ЗАПИСИ» И КОПИРОВАНИЕ ТАЛОНА ---
+        function updateBookingsBadge() {
+            const badge = document.getElementById('bookings-badge');
+            if (bookings.length > 0) {
+                badge.textContent = bookings.length;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function openBookingsDrawer() {
+            renderBookingsList();
+            const drawer = document.getElementById('bookings-drawer');
+            drawer.classList.remove('hidden');
+            drawer.classList.add('flex');
+        }
+
+        function closeBookingsDrawer() {
+            const drawer = document.getElementById('bookings-drawer');
+            drawer.classList.add('hidden');
+            drawer.classList.remove('flex');
+        }
+
+        function renderBookingsList() {
+            const list = document.getElementById('bookings-list');
+            if (bookings.length === 0) {
+                list.innerHTML = `
+                    <div class="text-center py-12 space-y-2">
+                        <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <p class="text-sm font-semibold text-slate-800">Пока нет активных записей</p>
+                        <p class="text-xs text-slate-500">Выберите любую акцию в ленте и нажмите «Записаться и напомнить».</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = bookings.map((b, idx) => `
+                <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-coral-600 bg-coral-50 px-2.5 py-0.5 rounded-md">Талон #${b.bookingId}</span>
+                        <button onclick="cancelBooking(${idx})" class="text-xs text-slate-400 hover:text-rose-600 transition">Отменить</button>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-sm text-slate-900">${b.driveTitle}</h4>
+                        <p class="text-xs text-slate-600 mt-1">📅 ${b.date} • ⏰ Слоты: <strong>${b.slot}</strong></p>
+                        <p class="text-xs text-slate-600 mt-0.5">📍 ${b.address}</p>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-slate-200/70 text-xs space-y-1 text-slate-600">
+                        <div><strong>Донор:</strong> ${b.donorName} (${b.contact})</div>
+                        <div><strong>Напоминание:</strong> ${b.reminders}</div>
+                        <div class="text-emerald-700 font-medium pt-1">✓ Не забудьте удостоверение личности и лёгкий завтрак</div>
+                    </div>
+                    <button onclick="copyReminderCard(${idx})" class="w-full py-2 px-3 rounded-xl text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 transition flex items-center justify-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                        <span>Скопировать памятку-талон</span>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function cancelBooking(index) {
+            const removed = bookings.splice(index, 1)[0];
+            if (removed) {
+                const drive = drives.find(d => d.id === removed.driveId);
+                if (drive) drive.slots += 1;
+            }
+            saveState();
+            updateBookingsBadge();
+            renderBookingsList();
+            renderEvents();
+            showToast('Запись отменена.');
+        }
+
+        function copyReminderCard(index) {
+            const b = bookings[index];
+            if (!b) return;
+            const text = `🩸 Талон донора #${b.bookingId} («Донор рядом»)\nАкция: ${b.driveTitle}\nДата и время: ${b.date} (слот ${b.slot})\nАдрес: ${b.address}\nПамятка: взять удостоверение личности, не есть жирное за 24 ч, утром лёгкий завтрак.`;
+
+            // Безопасное копирование через временный textarea (работает в iframe)
+            const tempInput = document.createElement('textarea');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            showToast('Текст талона и памятки скопирован в буфер обмена!');
+        }
+
+        // --- 6. ДЕМО-ДОБАВЛЕНИЕ АКЦИИ (Для презентации) ---
+        function openAddDriveModal() {
+            const modal = document.getElementById('add-drive-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeAddDriveModal() {
+            const modal = document.getElementById('add-drive-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function submitNewDrive(e) {
+            e.preventDefault();
+            const newDrive = {
+                id: 'drv-' + Date.now(),
+                title: document.getElementById('new-title').value.trim(),
+                city: document.getElementById('new-city').value,
+                type: document.getElementById('new-type').value,
+                center: document.getElementById('new-center').value.trim(),
+                address: document.getElementById('new-address').value.trim(),
+                date: document.getElementById('new-date').value.trim(),
+                slots: parseInt(document.getElementById('new-slots').value, 10) || 20,
+                urgentGroups: ['I (0) Rh−', 'II (A) Rh+']
+            };
+
+            drives.unshift(newDrive);
+            saveState();
+            renderEvents();
+            closeAddDriveModal();
+            showToast('Новая проверенная акция опубликована в ленте!');
+            document.getElementById('events-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // --- 7. ЧЕК-ЛИСТ САМОПРОВЕРКИ И ПАМЯТКА ---
+        function evaluateEligibility() {
+            const boxes = document.querySelectorAll('.elig-box');
+            const checkedCount = Array.from(boxes).filter(b => b.checked).length;
+            const res = document.getElementById('eligibility-result');
+
+            if (checkedCount === 0) {
+                res.className = 'p-4 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-600';
+                res.innerHTML = 'Отметьте все 4 пункта выше, чтобы увидеть предварительную подсказку.';
+            } else if (checkedCount < 4) {
+                res.className = 'p-4 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-900';
+                res.innerHTML = `Отмечено <strong>${checkedCount} из 4</strong> пунктов. Если хотя бы одно условие не соблюдено, донацию лучше перенести на более подходящий день.`;
+            } else {
+                res.className = 'p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-900';
+                res.innerHTML = '<strong>Отлично!</strong> По базовым критериям вы можете стать донором. Выбирайте ближайшую акцию выше и записывайтесь.';
+            }
+        }
+
+        function togglePrepDetails() {
+            const details = document.getElementById('prep-details');
+            const btn = document.getElementById('toggle-prep-btn');
+            if (details.classList.contains('hidden')) {
+                details.classList.remove('hidden');
+                btn.textContent = 'Свернуть';
+            } else {
+                details.classList.add('hidden');
+                btn.textContent = 'Развернуть';
+            }
+        }
+
+        // --- 8. ВСПЛЫВАЮЩИЕ УВЕДОМЛЕНИЯ (TOAST) ---
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'bg-slate-900 text-white text-xs font-medium px-4 py-3 rounded-xl shadow-lg flex items-center gap-2.5 max-w-sm pointer-events-auto transition-opacity duration-300';
+            toast.innerHTML = `
+                <span class="w-2 h-2 rounded-full bg-coral-500 shrink-0"></span>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // Инициализация при загрузке
+        window.addEventListener('DOMContentLoaded', () => {
+            renderBloodNeeds();
+            renderEvents();
+            updateBookingsBadge();
+        });
+    </script>
+</body>
+</html>
